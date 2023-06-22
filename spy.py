@@ -88,11 +88,12 @@ class AtLeastOneNewComment(Check):
 
 
 class DownloadLinkDead(Check):
-    def __init__(self, prod):
+    def __init__(self, prod, code):
         super().__init__(prod)
+        self._code = code
 
     def __str__(self) -> str:
-        return f"[{self._prod._name}]({self._prod.link()}) has a dead download link."
+        return f"[{self._prod._name}]({self._prod.link()}) has a dead download link (code {self._code})."
 
 
 class NewProduction(Check):
@@ -121,8 +122,9 @@ def check_prod(f, driver, link: str) -> List[Check]:
 
     # Check for dead links
     r = requests.head(current.dowload_link())
-    if not r.status_code == 200:
-        checks.append(DownloadLinkDead(current))
+
+    if not r.status_code in [200, 302]:
+        checks.append(DownloadLinkDead(current, r.status_code))
 
     return checks
 
